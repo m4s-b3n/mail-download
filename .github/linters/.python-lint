@@ -1,0 +1,17 @@
+[MAIN]
+# Minimum Python version
+py-version=3.12
+
+# Files or directories to be skipped
+ignore=CVS,.git,__pycache__,.venv,venv,node_modules
+
+[MESSAGES CONTROL]
+# Disable import-error as super-linter doesn't have project dependencies installed
+# Disable line-too-long as it's handled by ruff/flake8 with 120 char limit
+disable=
+    import-error,   # E0401: Dependencies not installed in linter environment
+    line-too-long,  # C0301: Handled by ruff/flake8
+
+[FORMAT]
+# Maximum number of characters on a single line
+max-line-length=120

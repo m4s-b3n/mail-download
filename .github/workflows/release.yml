@@ -1,0 +1,113 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  # Run tests first - gate for everything else
+  test:
+    name: Test
+    uses: ./.github/workflows/test.yml
+    permissions:
+      actions: read
+      checks: write
+      contents: read
+      id-token: write
+      pull-requests: write
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}-test
+      cancel-in-progress: true
+
+  # Lint in parallel with tests
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+      statuses: write
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}-lint
+      cancel-in-progress: true
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Lint
+        uses: super-linter/super-linter@d5b0a2ab116623730dd094f15ddc1b6b25bf7b99 # v8.3.2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          FILTER_REGEX_EXCLUDE: CHANGELOG.md
+          ENABLE_COMMITLINT_STRICT_MODE: true
+          ENFORCE_COMMITLINT_CONFIGURATION_CHECK: true
+          VALIDATE_BIOME_FORMAT: false
+          VALIDATE_BIOME_LINT: false
+          VALIDATE_PYTHON_BLACK: false
+          VALIDATE_PYTHON_ISORT: false
+          VALIDATE_TRIVY: false
+
+  # Build docker image with branch/PR tags to verify build works
+  # This also warms the cache for the release build
+  build:
+    name: Docker Build
+    uses: ./.github/workflows/docker.yml
+    permissions:
+      contents: read
+      packages: write
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}-build
+      cancel-in-progress: true
+
+  # Semantic release - only on push to main
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    needs:
+      - test
+      - lint
+      - build
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}-release
+      cancel-in-progress: false
+    outputs:
+      new_release_published: ${{ steps.semrel.outputs.new_release_published == 'true' }}
+      new_release_version: ${{ steps.semrel.outputs.new_release_version }}
+    steps:
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      - uses: actions/create-github-app-token@3ff1caaa28b64c9cc276ce0a02e2ff584f3900c5 # v2.0.2
+        id: token
+        with:
+          app-id: ${{ vars.APP_ID_SEMREL }}
+          private-key: ${{ secrets.APP_KEY_SEMREL }}
+
+      - name: Semantic release
+        id: semrel
+        uses: cycjimmy/semantic-release-action@b12c8f6015dc215fe37bc154d4ad456dd3833c90 # v6.0.0
+        with:
+          ci: true
+          extra_plugins: |
+            semantic-release-major-tag
+        env:
+          GITHUB_TOKEN: ${{ steps.token.outputs.token }}

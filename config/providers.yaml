@@ -1,0 +1,49 @@
+# Mail Provider Configuration
+# This file contains IMAP settings for various email providers.
+# Add new providers by following the same structure.
+
+providers:
+  gmx:
+    name: GMX Mail
+    imap_host: imap.gmx.net
+    imap_port: 993
+    ssl: true
+    description: GMX webmail service (Germany)
+
+  gmail:
+    name: Google Gmail
+    imap_host: imap.gmail.com
+    imap_port: 993
+    ssl: true
+    description: Google Gmail (requires App Password if 2FA enabled)
+
+  outlook:
+    name: Microsoft Outlook
+    imap_host: outlook.office365.com
+    imap_port: 993
+    ssl: true
+    description: Microsoft Outlook/Office 365
+
+  yahoo:
+    name: Yahoo Mail
+    imap_host: imap.mail.yahoo.com
+    imap_port: 993
+    ssl: true
+    description: Yahoo Mail (requires App Password)
+
+  icloud:
+    name: Apple iCloud
+    imap_host: imap.mail.me.com
+    imap_port: 993
+    ssl: true
+    description: Apple iCloud Mail (requires App-Specific Password)
+
+  custom:
+    name: Custom IMAP Server
+    imap_host: "${IMAP_HOST}"
+    imap_port: "${IMAP_PORT:-993}"
+    ssl: "${IMAP_SSL:-true}"
+    description: Custom IMAP server (configure via environment variables)
+
+# Default provider (used when --provider not specified)
+default: gmx

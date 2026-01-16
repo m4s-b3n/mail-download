@@ -1,0 +1,7 @@
+---
+# Checkov configuration
+# https://www.checkov.io/2.Basics/CLI%20Command%20Reference.html
+
+skip-check:
+  # CKV_DOCKER_2: HEALTHCHECK not needed for CLI tool that runs and exits
+  - CKV_DOCKER_2

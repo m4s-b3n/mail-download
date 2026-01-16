@@ -1,0 +1,54 @@
+name: Tests
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      checks: write
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run tests with coverage
+        run: |
+          pytest tests/ -v --cov=src --cov-report=xml --cov-report=term-missing --junitxml=test-results.xml
+
+      - name: Test Report
+        id: test-report
+        uses: dorny/test-reporter@b082adf0eced0765477756c2a610396589b8c637 # v2.5.0
+        if: always()
+        with:
+          name: Test Results
+          path: test-results.xml
+          reporter: java-junit
+          only-summary: "false"
+          use-actions-summary: "true"
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Code Coverage Summary
+        uses: clearlyip/code-coverage-report-action@9e2cd22e39153feba8b4477e4fefcc0b5e2727ba # v6.0.1
+        with:
+          filename: coverage.xml

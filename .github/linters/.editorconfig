@@ -1,0 +1,6 @@
+# EditorConfig for shell script formatting (used by shfmt)
+# https://google.github.io/styleguide/shellguide.html
+
+[*.sh]
+indent_style = space
+indent_size = 4

@@ -1,0 +1,13 @@
+# Ignore everything
+*
+
+# Whitelist source code
+!src/
+!src/**
+
+# Whitelist dependencies
+!requirements.txt
+
+# Whitelist configuration
+!config/
+!config/**
